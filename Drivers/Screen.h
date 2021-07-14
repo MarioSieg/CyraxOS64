@@ -18,7 +18,7 @@ static inline void ScreenPrint(const char* _msg) {
     ScreenPrintAt(_msg, -1, -1, SCREEN_COLOR_TEXT);
 }
 
-static inline void NewLn(void) {
+static inline void NewLine(void) {
     ScreenPrintAt("\n", -1, -1, SCREEN_COLOR_TEXT);
 }
 

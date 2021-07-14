@@ -39,12 +39,12 @@ void IsrInstallation() {
 }
 
 void IsrHandler(struct IsrRegisterAggregate _regs) {
-    char buf[32];
-    I32ToStr(_regs.InterruptNumber, buf);
+    char buf[64];
+    FmtI64(_regs.InterruptNumber, buf);
     ScreenPrint(buf);
     ScreenPrint(" ");
     ScreenPrint(INTERRUPT_MESSAGES[_regs.InterruptNumber]);
-    NewLn();
+    NewLine();
 }
 
 const char* const INTERRUPT_MESSAGES[32] = {

@@ -60,10 +60,15 @@ __attribute__((noreturn)) extern void Panic(const char* _msg, const char* _file,
 /* Trigger a kernel panic, print file and line info and loop forever. */
 #define PANIC(_msg) Panic(_msg, __FILE__, __LINE__)
 
-/* Convert an I32 into a string buffer. */
-extern void I32ToStr(I32 _n, char* _str);
+typedef char FormatBuf64[32];
 
-/* Represents a 32-bit GPR such as %eax or %esi. */
+/* Convert an I64 into a string buffer. */
+extern void FmtI64(I64 _n, FormatBuf64 _buf);
+
+/* Convert an I64 into a string buffer. */
+extern void FmtI64Hex(I64 _n, FormatBuf64 _buf);
+
+/* Represents a 64-bit GPR such as %rax or %rsi. */
 union Register64 {
     U64 R64;
     struct {
@@ -79,16 +84,49 @@ union Register64 {
    };
 };
 
+/* Represents a 128-bit SSE register such as %xmm0 or %xmm3. */
+union Register128 {
+    struct {
+        U64 U;
+        F64 F;
+    } Lo, Hi;
+};
+
 /* Contains all register IDs except for %eip! */
 enum Register {
-    REGISTER_EAX = 0,
-    REGISTER_EBX = 1,
-    REGISTER_ECX = 2,
-    REGISTER_EDX = 3,
-    REGISTER_ESI = 4,
-    REGISTER_EDI = 5,
-    REGISTER_ESP = 6,
-    REGISTER_EBP = 7,
+    REGISTER_RAX    = 0,
+    REGISTER_RBX    = 1,
+    REGISTER_RCX    = 2,
+    REGISTER_RDX    = 3,
+    REGISTER_RSI    = 4,
+    REGISTER_RDI    = 5,
+    REGISTER_RSP    = 6,
+    REGISTER_RBP    = 7,
+    REGISTER_R8     = 8,
+    REGISTER_R9     = 9,
+    REGISTER_R10    = 10,
+    REGISTER_R11    = 11,
+    REGISTER_R12    = 12,
+    REGISTER_R13    = 13,
+    REGISTER_R14    = 14,
+    REGISTER_R15    = 15,
+
+    REGISTER_XMM0   = 16,
+    REGISTER_XMM1   = 17,
+    REGISTER_XMM2   = 18,
+    REGISTER_XMM3   = 19,
+    REGISTER_XMM4   = 20,
+    REGISTER_XMM5   = 21,
+    REGISTER_XMM6   = 22,
+    REGISTER_XMM7   = 23,
+    REGISTER_XMM8   = 24,
+    REGISTER_XMM9   = 25,
+    REGISTER_XMM10  = 26,
+    REGISTER_XMM11  = 27,
+    REGISTER_XMM12  = 28,
+    REGISTER_XMM13  = 29,
+    REGISTER_XMM14  = 30,
+    REGISTER_XMM15  = 31,
     REGISTER_COUNT
 };
 
@@ -97,18 +135,44 @@ extern const char* const REG_NAMES[REGISTER_COUNT];
 
 /* Contains bit masks for all registers except for %eip! */
 enum RegisterMask {
-    REGISTER_MASK_EAX = 1 << REGISTER_EAX,
-    REGISTER_MASK_EBX = 1 << REGISTER_EBX,
-    REGISTER_MASK_ECX = 1 << REGISTER_ECX,
-    REGISTER_MASK_EDX = 1 << REGISTER_EDX,
-    REGISTER_MASK_ESI = 1 << REGISTER_ESI,
-    REGISTER_MASK_EDI = 1 << REGISTER_EDI,
-    REGISTER_MASK_ESP = 1 << REGISTER_ESP,
-    REGISTER_MASK_EBP = 1 << REGISTER_EBP,
+    REGISTER_MASK_RAX   = 1 << REGISTER_RAX,
+    REGISTER_MASK_RBX   = 1 << REGISTER_RBX,
+    REGISTER_MASK_RCX   = 1 << REGISTER_RCX,
+    REGISTER_MASK_RDX   = 1 << REGISTER_RDX,
+    REGISTER_MASK_RSI   = 1 << REGISTER_RSI,
+    REGISTER_MASK_RDI   = 1 << REGISTER_RDI,
+    REGISTER_MASK_RSP   = 1 << REGISTER_RSP,
+    REGISTER_MASK_RBP   = 1 << REGISTER_RBP,
+    REGISTER_MASK_R8    = 1 << REGISTER_R8 ,
+    REGISTER_MASK_R9    = 1 << REGISTER_R9 ,
+    REGISTER_MASK_R10   = 1 << REGISTER_R10,
+    REGISTER_MASK_R11   = 1 << REGISTER_R11,
+    REGISTER_MASK_R12   = 1 << REGISTER_R12,
+    REGISTER_MASK_R13   = 1 << REGISTER_R13,
+    REGISTER_MASK_R14   = 1 << REGISTER_R14,
+    REGISTER_MASK_R15   = 1 << REGISTER_R15,
+
+    REGISTER_MASK_XMM0  = 1 << REGISTER_XMM0,
+    REGISTER_MASK_XMM1  = 1 << REGISTER_XMM1,
+    REGISTER_MASK_XMM2  = 1 << REGISTER_XMM2,
+    REGISTER_MASK_XMM3  = 1 << REGISTER_XMM3,
+    REGISTER_MASK_XMM4  = 1 << REGISTER_XMM4,
+    REGISTER_MASK_XMM5  = 1 << REGISTER_XMM5,
+    REGISTER_MASK_XMM6  = 1 << REGISTER_XMM6,
+    REGISTER_MASK_XMM7  = 1 << REGISTER_XMM7,
+    REGISTER_MASK_XMM8  = 1 << REGISTER_XMM8,
+    REGISTER_MASK_XMM9  = 1 << REGISTER_XMM9,
+    REGISTER_MASK_XMM10 = 1 << REGISTER_XMM10,
+    REGISTER_MASK_XMM11 = 1 << REGISTER_XMM11,
+    REGISTER_MASK_XMM12 = 1 << REGISTER_XMM12,
+    REGISTER_MASK_XMM13 = 1 << REGISTER_XMM13,
+    REGISTER_MASK_XMM14 = 1 << REGISTER_XMM14,
+    REGISTER_MASK_XMM15 = 1 << REGISTER_XMM15,
 };
 
 /* Contians storage for all registers. */
-typedef union Register64 RegSet32[REGISTER_COUNT];
+typedef union Register64 Register64AggregateSet[REGISTER_COUNT >> 1];
+typedef union Register128 Register128AggregateSet[REGISTER_COUNT >> 1];
 
 /* Query the value of %eip. */
 __attribute__((always_inline)) static inline union Register64 QueryRip() {
@@ -123,9 +187,15 @@ __attribute__((always_inline)) static inline union Register64 QueryRip() {
 }
 
 /* Queries regset from register data. These values are not that accurate. */
-extern void QueryRegSet(RegSet32 _regSet);
+extern void QueryRegSet(Register64AggregateSet _regSet64, Register128AggregateSet _regSet128);
 
 /* Prints the value of a single register and the name. */
-extern void DumpReg(union Register64 _reg, const char* _regName);
+extern void DumpReg64(union Register64 _reg, const char* _regName);
+
+/* Prints the value of a single register and the name. */
+extern void DumpReg128(union Register128 _reg, const char* _regName);
+
+/* Prints the value of all registers. */ 
+extern void DumpAllRegs(void);
 
 #endif

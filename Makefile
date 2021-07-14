@@ -6,7 +6,7 @@ KERNEL_OFFSET = 0x8200
 CC = gcc
 GDB = gdb
 
-CFLAGS = -elf64 -fno-pie -O3 -Wall -Wextra -Werror
+CFLAGS = -elf64 -fno-pie -O3 -msse -msse2 -Wall -Wextra -Werror
 
 Cyrax64.iso: Boot/BootLoader.bin Kernel.bin
 	cat $^ > Cyrax64.iso

@@ -65,7 +65,9 @@ static I32 PrintCharAt(const char _c, I32 _col, I32 _row, const U8 _attrib) {
             );
         }
         volatile U8* last = GetOffset(0, SCREEN_MAX_ROWS - 1) + VGA_VRAM_PTR;
-        MemSetV(last, 0, SCREEN_MAX_COLS << 1);
+        for (register I32 i = 0; i < SCREEN_MAX_COLS * 2; ++i) {
+            last[i] = 0;
+        }
         offset -= SCREEN_MAX_COLS << 1;
     }
     SetCursorOffset(offset);

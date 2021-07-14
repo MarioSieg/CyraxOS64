@@ -10,8 +10,8 @@ void KernelEntry(void) {
         IsrInstallation();
         asm volatile("int3");
         asm volatile("int $1");
-        PANIC("End!");
     */
+    PANIC("Nooooo!");
 }
 
 void main(void) {
