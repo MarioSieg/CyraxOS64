@@ -1,7 +1,7 @@
 #include "Kernel.h"
 #include "../Drivers/Screen.h"
 
-void* MemCpy(void* const _dst, const void* const _src, const U32 _size) {
+void* MemCpy(void* const _dst, const void* const _src, const U64 _size) {
     register U8* to = (U8*)_dst;
     register const U8* from = (const U8*)_src;
     register const U8* const fromEnd = (const U8*)_src + _size;
@@ -13,7 +13,7 @@ void* MemCpy(void* const _dst, const void* const _src, const U32 _size) {
     return _dst;
 }
 
-volatile void* MemCpyV(volatile void* const _dst, const volatile void* const _src, U32 _size) {
+volatile void* MemCpyV(volatile void* const _dst, const volatile void* const _src, const U64 _size) {
     register volatile U8* to = (U8*)_dst;
     register const volatile U8* from = (const volatile U8*)_src;
     register const volatile U8* const fromEnd = from + _size;
@@ -23,7 +23,7 @@ volatile void* MemCpyV(volatile void* const _dst, const volatile void* const _sr
     return _dst;
 }
 
-void* MemSet(void* const _block, const U8 _val, const U32 _size) {
+void* MemSet(void* const _block, const U8 _val, const U64 _size) {
     register U8* to = (U8*)_block;
     register const U8* const from = to + _size;
     while (to < from) {
@@ -32,7 +32,7 @@ void* MemSet(void* const _block, const U8 _val, const U32 _size) {
     return _block;
 }
 
-volatile void* MemSetV(volatile void* const _block, const U8 _val, const U32 _size) {
+volatile void* MemSetV(volatile void* const _block, const U8 _val, const U64 _size) {
     register volatile U8* to = (volatile U8*)_block;
     register const volatile U8* const from = to + _size;
     while (to < from) {
@@ -55,32 +55,6 @@ void Panic(const char* const _msg, const char* const _file, const I32 _line) {
     ScreenPrintError(buf);
     NewLn();
 
-    const union Register32 eip = QueryEip();
-    DumpReg(eip, "eip");
-    NewLn();
-
-    RegSet32 regSet;
-    QueryRegSet(regSet);
-    for(I32 i = 0; i < REGISTER_COUNT; ++i) {
-        DumpReg(regSet[i], REG_NAMES[i]);
-        NewLn();
-    }
-
-    #if PANIC_DUMP_CODE
-
-    volatile const U8* machCode = (const U8*)(U64)eip.R32;
-    if (machCode) {
-        for(register I32 i = 0; i < PANIC_DUMP_SIZE; ++i) {
-            const I32 k = *machCode++;
-            MemSet(buf, 0, sizeof buf);
-            I32ToStr(k, buf);
-            ScreenPrint(buf);
-            NewLn();
-        }
-    }
-
-    #endif
-
     for(;;);
 }
 
@@ -100,29 +74,29 @@ void I32ToStr(register I32 _n, register char* _str) {
 }
 
 const char* const REG_NAMES[REGISTER_COUNT] = {
-    "eax",
-    "ebx",
-    "ecx",
-    "edx",
-    "esi",
-    "edi",
-    "esp",
-    "ebp",
+    "rax",
+    "rbx",
+    "rcx",
+    "rdx",
+    "rsi",
+    "rdi",
+    "rsp",
+    "rbp",
 };
 
 void QueryRegSet(RegSet32 _regSet) {
-    U32* const regSet = &_regSet->R32;
-    asm volatile("movl %%eax, %0": "=r" (regSet[REGISTER_EAX])::);
-    asm volatile("movl %%ebx, %0": "=r" (regSet[REGISTER_EBX])::);
-    asm volatile("movl %%ecx, %0": "=r" (regSet[REGISTER_ECX])::);
-    asm volatile("movl %%edx, %0": "=r" (regSet[REGISTER_EDX])::);
-    asm volatile("movl %%esi, %0": "=r" (regSet[REGISTER_ESI])::);
-    asm volatile("movl %%edi, %0": "=r" (regSet[REGISTER_EDI])::);
-    asm volatile("movl %%esp, %0": "=r" (regSet[REGISTER_ESP])::);
-    asm volatile("movl %%ebp, %0": "=r" (regSet[REGISTER_EBP])::);
+    U64* const regSet = &_regSet->R64;
+    asm volatile("movq %%rax, %0": "=r" (regSet[REGISTER_EAX])::);
+    asm volatile("movq %%rbx, %0": "=r" (regSet[REGISTER_EBX])::);
+    asm volatile("movq %%rcx, %0": "=r" (regSet[REGISTER_ECX])::);
+    asm volatile("movq %%rdx, %0": "=r" (regSet[REGISTER_EDX])::);
+    asm volatile("movq %%rsi, %0": "=r" (regSet[REGISTER_ESI])::);
+    asm volatile("movq %%rdi, %0": "=r" (regSet[REGISTER_EDI])::);
+    asm volatile("movq %%rsp, %0": "=r" (regSet[REGISTER_ESP])::);
+    asm volatile("movq %%rbp, %0": "=r" (regSet[REGISTER_EBP])::);
 }
 
-void DumpReg(const union Register32 _reg, const char* const _regName) {
+void DumpReg(const union Register64 _reg, const char* const _regName) {
     ScreenPrint("%");
     ScreenPrint(_regName);
     ScreenPrint(": ");

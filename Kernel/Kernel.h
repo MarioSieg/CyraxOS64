@@ -43,22 +43,19 @@ typedef U64                     UIntPtr64;
 #define UNLIKELY(_x) __builtin_expect(!!( _x ), FALSE)
 
 /* Copy '_size' bytes of memory from '_src' to '_dst'.  */
-extern void* MemCpy(void* _dst, const void* _src, U32 _size);
+extern void* MemCpy(void* _dst, const void* _src, U64 _size);
 
 /* Volatile copy '_size' bytes of memory from '_src' to '_dst'.  */
-extern volatile void* MemCpyV(volatile void* _dst, const volatile void* _src, U32 _size);
+extern volatile void* MemCpyV(volatile void* _dst, const volatile void* _src, U64 _size);
 
 /* Fill the memory '_block' of '_size_ with '_val'. */
-extern void* MemSet(void* _block, U8 _val, U32 _size);
+extern void* MemSet(void* _block, U8 _val, U64 _size);
 
 /* Volatile fill the memory '_block' of '_size_ with '_val'. */
-extern volatile void* MemSetV(volatile void* _block, U8 _val, U32 _size);
+extern volatile void* MemSetV(volatile void* _block, U8 _val, U64 _size);
 
 /* Trigger a kernel panic, print file and line info and loop forever. */
 __attribute__((noreturn)) extern void Panic(const char* _msg, const char* _file, const I32 _line);
-
-#define PANIC_DUMP_CODE TRUE
-#define PANIC_DUMP_SIZE 8
 
 /* Trigger a kernel panic, print file and line info and loop forever. */
 #define PANIC(_msg) Panic(_msg, __FILE__, __LINE__)
@@ -67,16 +64,19 @@ __attribute__((noreturn)) extern void Panic(const char* _msg, const char* _file,
 extern void I32ToStr(I32 _n, char* _str);
 
 /* Represents a 32-bit GPR such as %eax or %esi. */
-union Register32 {
-    U32 R32;
+union Register64 {
+    U64 R64;
     struct {
-        U16 Reverved;
-        U16 R16;
+        U32 R32;
         struct {
-            U8 R8Hi;
-            U8 R8Lo;
+            U16 Reverved;
+            U16 R16;
+            struct {
+                U8 R8Hi;
+                U8 R8Lo;
+            };
         };
-    };
+   };
 };
 
 /* Contains all register IDs except for %eip! */
@@ -108,25 +108,24 @@ enum RegisterMask {
 };
 
 /* Contians storage for all registers. */
-typedef union Register32 RegSet32[REGISTER_COUNT];
+typedef union Register64 RegSet32[REGISTER_COUNT];
 
 /* Query the value of %eip. */
-__attribute__((always_inline)) static inline union Register32 QueryEip() {
-    U64 eip;
+__attribute__((always_inline)) static inline union Register64 QueryRip() {
+    U64 rip;
     asm
     (
         "call 1f \n\t"
         "1: popq %0"
-        : "=r"(eip)
+        : "=r"(rip)
     );
-    union Register32 r = {0};
-    return r;
+    return *(union Register64*)rip;
 }
 
 /* Queries regset from register data. These values are not that accurate. */
 extern void QueryRegSet(RegSet32 _regSet);
 
 /* Prints the value of a single register and the name. */
-extern void DumpReg(union Register32 _reg, const char* _regName);
+extern void DumpReg(union Register64 _reg, const char* _regName);
 
 #endif
