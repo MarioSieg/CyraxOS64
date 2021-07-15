@@ -34,6 +34,11 @@ debug: Cyrax64.iso Kernel.elf
 %.bin: %.asm
 	nasm $< -f bin -o $@
 
+Boot/BootLoader.bin: Boot/BootLoader.S
+	as Boot/BootLoader.S -o Boot/BootLoader.tmp
+	ld --oformat binary -Ttext 0x7C00 -o Boot/BootLoader.bin Boot/BootLoader.tmp
+	rm Boot/BootLoader.tmp
+
 %.o: %.S
 	as $< -o $@
 	ld --oformat binary -o $@ $@
