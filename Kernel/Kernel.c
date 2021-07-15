@@ -159,7 +159,6 @@ void DumpAllRegs(void) {
     Register64AggregateSet reg64Set;
     Register128AggregateSet reg128Set;
     QueryRegSet(reg64Set, reg128Set);
-
     for (U8 i = 0; i < REGISTER_COUNT >> 1; ++i) {
         DumpReg64(reg64Set[i], REG_NAMES[i]);
     }

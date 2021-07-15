@@ -36,16 +36,16 @@ DiskLoadRoutine:
     xorb    %ch, %ch
     xorb    %dh, %dh           
     int     $0x13                   # Load from disk using BIOS interrupts
-    jc      DiskReadError           # Failed to read disks
+    jc      Die                     # Failed to read disks
     popw    %dx
     cmpb    %dh, %al      
-    jne     DiskReadError           # Wrong amount of sectors read
+    jne     Die                     # Wrong amount of sectors read
     popa
     retw
 
-# For now just loop if there's a disk error
-DiskReadError:
-    jmp     .
+# Called if there is an error
+Die:
+    hlt
 
 # Setup GDT (global descriptor table) for 32-bit protected mode
 Gdt32Start:
@@ -99,6 +99,7 @@ ProtectedModeEntered:
     movw    %ax, %gs
     movl    $0x90000, %ebp
     movl    %ebp, %esp
+    calll   CheckCpuIdAndLongModeSupport
     calll   InitializePageTable
     calll   EnterLongMode
     jmp     . 
@@ -161,6 +162,34 @@ InitializePageTable:
     movl    %cr4, %eax
     orl     $(1 << 5), %eax
     movl    %eax, %cr4
+    popal
+    retl
+
+
+# Checks if CPUID and long mode is supported
+.code32
+CheckCpuIdAndLongModeSupport:
+    pushal
+    pushfl
+    popl    %eax
+    movl    %eax, %ecx
+    xorl    $(1 << 21), %eax
+    pushl   %eax
+    popfl
+    pushfl
+    popl    %eax
+    pushl   %ecx
+    popfl
+    cmpl    %ecx, %eax
+    je      Die
+    movl    $0x80000000, %eax
+    cpuid                       # Check extended CPUID
+    cmpl    $0x80000001, %eax
+    jb      Die
+    movl    $0x80000001, %eax
+    cpuid                       # Check for long mode
+    testl   $(1 << 29), %edx
+    jz      Die
     popal
     retl
 
