@@ -28,12 +28,6 @@ debug: Cyrax64.iso Kernel.elf
 	${CC} ${CFLAGS} -ffreestanding -nostdlib -c $< -o $@
 	${CC} ${CFLAGS} -ffreestanding -nostdlib -c -S $< -o $<.asm
 
-%.o: %.asm
-	nasm $< -f elf64 -o $@
-
-%.bin: %.asm
-	nasm $< -f bin -o $@
-
 Boot/BootLoader.bin: Boot/BootLoader.S
 	as Boot/BootLoader.S -o Boot/BootLoader.tmp
 	ld --oformat binary -Ttext 0x7C00 -o Boot/BootLoader.bin Boot/BootLoader.tmp
