@@ -12,10 +12,10 @@ Cyrax64.iso: Boot/BootLoader.bin Kernel.bin
 	cat $^ > Cyrax64.iso
 
 Kernel.bin: Boot/Head.o ${OBJ}
-	ld -o $@ -Ttext ${KERNEL_OFFSET} $^ --oformat binary
+	ld -o $@ -z max-page-size=4096 -Ttext ${KERNEL_OFFSET} $^ --oformat binary
 
 Kernel.elf: Boot/Head.o ${OBJ}
-	ld -o $@ -Ttext ${KERNEL_OFFSET} $^ 
+	ld -o $@ -z max-page-size=4096 -Ttext ${KERNEL_OFFSET} $^ 
 
 run: Cyrax64.iso
 	qemu-system-x86_64 -fda Cyrax64.iso
@@ -33,6 +33,14 @@ debug: Cyrax64.iso Kernel.elf
 
 %.bin: %.asm
 	nasm $< -f bin -o $@
+
+%.o: %.S
+	as $< -o $@
+	ld --oformat binary -o $@ $@
+
+%.bin: %.S
+	as $< -o $@
+	ld --oformat binary -o $@ $@
 
 clean:
 	rm -rf *.bin *.dis *.o *.elf

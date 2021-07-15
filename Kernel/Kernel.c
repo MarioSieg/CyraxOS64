@@ -119,8 +119,8 @@ const char* const REG_NAMES[REGISTER_COUNT] = {
 };
 
 void QueryRegSet(Register64AggregateSet _regSet64, Register128AggregateSet _regSet128) {
-    U64* const regSet64 = (U64*)_regSet64;
-    U64* const regSet128 = (U64*)_regSet128;
+    volatile U64* volatile const regSet64 = (U64*)_regSet64;
+    volatile U64* volatile const regSet128 = (U64*)_regSet128;
     asm volatile("movq %%rax, %0" : "=r" (regSet64[REGISTER_RAX])::);
     asm volatile("movq %%rbx, %0" : "=r" (regSet64[REGISTER_RBX])::);
     asm volatile("movq %%rcx, %0" : "=r" (regSet64[REGISTER_RCX])::);

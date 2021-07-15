@@ -11,7 +11,6 @@ void KernelEntry(void) {
         asm volatile("int3");
         asm volatile("int $1");
     */
-    PANIC("Nooooo!");
 }
 
 void main(void) {
