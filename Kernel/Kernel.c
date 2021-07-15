@@ -121,22 +121,22 @@ const char* const REG_NAMES[REGISTER_COUNT] = {
 void QueryRegSet(Register64AggregateSet _regSet64, Register128AggregateSet _regSet128) {
     volatile U64* volatile const regSet64 = (U64*)_regSet64;
     volatile U64* volatile const regSet128 = (U64*)_regSet128;
-    asm volatile("movq %%rax, %0" : "=r" (regSet64[REGISTER_RAX]));
-    asm volatile("movq %%rbx, %0" : "=r" (regSet64[REGISTER_RBX]));
-    asm volatile("movq %%rcx, %0" : "=r" (regSet64[REGISTER_RCX]));
-    asm volatile("movq %%rdx, %0" : "=r" (regSet64[REGISTER_RDX]));
-    asm volatile("movq %%rsi, %0" : "=r" (regSet64[REGISTER_RSI]));
-    asm volatile("movq %%rdi, %0" : "=r" (regSet64[REGISTER_RDI]));
-    asm volatile("movq %%rsp, %0" : "=r" (regSet64[REGISTER_RSP]));
-    asm volatile("movq %%rbp, %0" : "=r" (regSet64[REGISTER_RBP]));
-    asm volatile("movq %%r8 , %0" : "=r" (regSet64[REGISTER_R8 ]));
-    asm volatile("movq %%r9 , %0" : "=r" (regSet64[REGISTER_R9 ]));
-    asm volatile("movq %%r10, %0" : "=r" (regSet64[REGISTER_R10]));
-    asm volatile("movq %%r11, %0" : "=r" (regSet64[REGISTER_R11]));
-    asm volatile("movq %%r12, %0" : "=r" (regSet64[REGISTER_R12]));
-    asm volatile("movq %%r13, %0" : "=r" (regSet64[REGISTER_R13]));
-    asm volatile("movq %%r14, %0" : "=r" (regSet64[REGISTER_R14]));
-    asm volatile("movq %%r15, %0" : "=r" (regSet64[REGISTER_R15]));
+    __asm__ volatile("movq %%rax, %0" : "=r" (regSet64[REGISTER_RAX]));
+    __asm__ volatile("movq %%rbx, %0" : "=r" (regSet64[REGISTER_RBX]));
+    __asm__ volatile("movq %%rcx, %0" : "=r" (regSet64[REGISTER_RCX]));
+    __asm__ volatile("movq %%rdx, %0" : "=r" (regSet64[REGISTER_RDX]));
+    __asm__ volatile("movq %%rsi, %0" : "=r" (regSet64[REGISTER_RSI]));
+    __asm__ volatile("movq %%rdi, %0" : "=r" (regSet64[REGISTER_RDI]));
+    __asm__ volatile("movq %%rsp, %0" : "=r" (regSet64[REGISTER_RSP]));
+    __asm__ volatile("movq %%rbp, %0" : "=r" (regSet64[REGISTER_RBP]));
+    __asm__ volatile("movq %%r8 , %0" : "=r" (regSet64[REGISTER_R8 ]));
+    __asm__ volatile("movq %%r9 , %0" : "=r" (regSet64[REGISTER_R9 ]));
+    __asm__ volatile("movq %%r10, %0" : "=r" (regSet64[REGISTER_R10]));
+    __asm__ volatile("movq %%r11, %0" : "=r" (regSet64[REGISTER_R11]));
+    __asm__ volatile("movq %%r12, %0" : "=r" (regSet64[REGISTER_R12]));
+    __asm__ volatile("movq %%r13, %0" : "=r" (regSet64[REGISTER_R13]));
+    __asm__ volatile("movq %%r14, %0" : "=r" (regSet64[REGISTER_R14]));
+    __asm__ volatile("movq %%r15, %0" : "=r" (regSet64[REGISTER_R15]));
     (void)regSet128;
 }
 

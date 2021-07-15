@@ -1,9 +1,35 @@
+.text
 .equ KERNEL_OFFSET, 0x8200
 
 # The BIOS gives the control to us
 # Main entry of the boot loader:
 .code16
 MachineBoot:
+    jmp BootProxy
+    .space 3 - (.-MachineBoot)
+
+    # PBP (BIOS parameter block) -> configuration for a 2.88MB floppy using FAT 12
+    OEMname:            .ascii      "CYRAX OS"
+    BytesPerSector:     .word       512
+    SectPerCluster:     .byte       1
+    ReservedSectors:    .word       1
+    NumFAT:             .byte       2
+    NumRootDirEntries:  .word       240
+    NumSectors:         .word       5760
+    MediaType:          .byte       0xF0
+    NumFATsectors:      .word       9
+    sectorsPerTrack:    .word       36
+    NumHeads:           .word       2
+    NumHiddenSectors:   .long       0
+    NumSectorsHuge:     .long       0
+    DriveNum:           .byte       0
+    Reserved:           .byte       0x00
+    Signature:          .byte       0x29
+    VolumeID:           .long       0x54428E71
+    VolumeLabel:        .ascii      "CYRAX OS   "
+    FileSysType:        .ascii      "FAT12   "
+
+BootProxy:
     xorw    %ax, %ax                # Clear segment registers
     movw    %ax, %es
     movw    %ax, %ds
@@ -86,7 +112,6 @@ EnterProtectedMode:
     orl     $1, %eax
     movl    %eax, %cr0
     ljmpw   $CODE_SEG32, $ProtectedModeEntered 
-    jmp .
 
 # Now we are in 32-bit protected mode
 .code32
@@ -102,7 +127,6 @@ ProtectedModeEntered:
     calll   CheckCpuIdAndLongModeSupport
     calll   InitializePageTable
     calll   EnterLongMode
-    jmp     . 
 
 # Setup GDT (global descriptor table) for 64-bit long mode
 Gdt64Start:

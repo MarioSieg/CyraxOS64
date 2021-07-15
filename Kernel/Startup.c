@@ -1,5 +1,4 @@
 #include "../Drivers/Screen.h"
-#include "Isr.h"
 
 void KernelEntry(void) {
     ScreenClear();

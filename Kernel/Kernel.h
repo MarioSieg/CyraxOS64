@@ -48,14 +48,17 @@ typedef U64                     UIntPtr64;
 #define FALSE       0
 #define NULL        ((void*)0)
 
+/* Optimize branches for a TRUE condition. Might affect code layout, caching and instruction branch hints. */
 #define LIKELY(_x)   __builtin_expect(!!( _x ), TRUE)
+
+/* Optimize branches for a FALSE condition. Might affect code layout, caching and instruction branch hints. */
 #define UNLIKELY(_x) __builtin_expect(!!( _x ), FALSE)
 
 /* Copy '_size' bytes of memory from '_src' to '_dst'.  */
-extern void* MemCpy(void* _dst, const void* _src, U64 _size);
+extern void* MemCpy(void* restrict _dst, const void* restrict _src, U64 _size);
 
 /* Volatile copy '_size' bytes of memory from '_src' to '_dst'.  */
-extern volatile void* MemCpyV(volatile void* _dst, const volatile void* _src, U64 _size);
+extern volatile void* MemCpyV(volatile void* restrict _dst, const volatile void* restrict _src, U64 _size);
 
 /* Fill the memory '_block' of '_size_ with '_val'. */
 extern void* MemSet(void* _block, U8 _val, U64 _size);
@@ -64,7 +67,7 @@ extern void* MemSet(void* _block, U8 _val, U64 _size);
 extern volatile void* MemSetV(volatile void* _block, U8 _val, U64 _size);
 
 /* Trigger a kernel panic, print file and line info and loop forever. */
-__attribute__((noreturn)) extern void Panic(const char* _msg, const char* _file, const I32 _line);
+_Noreturn extern void Panic(const char* _msg, const char* _file, const I32 _line);
 
 /* Trigger a kernel panic, print file and line info and loop forever. */
 #define PANIC(_msg) Panic(_msg, __FILE__, __LINE__)
@@ -80,9 +83,10 @@ extern void FmtI64Hex(I64 _n, FormatBuf64 _buf);
 /* Represents a 64-bit GPR such as %rax or %rsi. */
 union Register64 {
     U64 R64;
+    U8 Raw[sizeof(U64)];
     struct {
         U32 R32;
-        struct {
+        union {
             U16 Reverved;
             U16 R16;
             struct {
@@ -93,13 +97,20 @@ union Register64 {
    };
 };
 
-/* Represents a 128-bit SSE register such as %xmm0 or %xmm3. */
+_Static_assert(sizeof(union Register64) == 8, "Invalid record size!");
+
+/* Represents a 128-bit SSE vector register such as %xmm0 or %xmm3. */
 union Register128 {
-    struct {
-        U64 U;
-        F64 F;
-    } Lo, Hi;
+   struct {
+        union {
+            U64 U;
+            F64 F;
+        } Lo, Hi;
+   };
+   U8 Raw[sizeof(U64) << 1];
 };
+
+_Static_assert(sizeof(union Register128) == 16, "Invalid record size!");
 
 /* Contains all register IDs except for %eip! */
 enum Register {
@@ -159,6 +170,7 @@ extern const char* const REG_NAMES[REGISTER_COUNT];
 #define REGISTER_MASK_R13   UINT64_C(1) << REGISTER_R13
 #define REGISTER_MASK_R14   UINT64_C(1) << REGISTER_R14
 #define REGISTER_MASK_R15   UINT64_C(1) << REGISTER_R15
+
 #define REGISTER_MASK_XMM0  UINT64_C(1) << REGISTER_XMM0
 #define REGISTER_MASK_XMM1  UINT64_C(1) << REGISTER_XMM1
 #define REGISTER_MASK_XMM2  UINT64_C(1) << REGISTER_XMM2
@@ -176,14 +188,14 @@ extern const char* const REG_NAMES[REGISTER_COUNT];
 #define REGISTER_MASK_XMM14 UINT64_C(1) << REGISTER_XMM14
 #define REGISTER_MASK_XMM15 UINT64_C(1) << REGISTER_XMM15
 
-/* Contians storage for all registers. */
+/* Contains storage for all registers. */
 typedef union Register64 Register64AggregateSet[REGISTER_COUNT >> 1];
 typedef union Register128 Register128AggregateSet[REGISTER_COUNT >> 1];
 
 /* Query the value of %eip. */
 __attribute__((always_inline)) static inline union Register64 QueryRip() {
     U64 rip;
-    asm
+    __asm__ volatile
     (
         "call 1f \n\t"
         "1: popq %0"
@@ -195,7 +207,7 @@ __attribute__((always_inline)) static inline union Register64 QueryRip() {
 /* Read the value of the (TSC) time stamp counter. */
 __attribute__((always_inline)) static inline U64 ReadTsc() {
     U32 lo, hi;
-    asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+    __asm__ volatile("rdtsc" : "=a"(lo), "=d"(hi));
     return (U64)lo | (U64)hi << 32;
 }
 
