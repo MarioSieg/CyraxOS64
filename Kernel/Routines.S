@@ -18,4 +18,6 @@ QueryRegSet:
     movq    %r14, 112(%rdi)
     movq    %r15, 120(%rdi)
 
+    # TODO: %xmm*
+
     retq
