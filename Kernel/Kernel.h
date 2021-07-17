@@ -54,6 +54,9 @@ typedef U64                     UIntPtr64;
 /* Optimize branches for a FALSE condition. Might affect code layout, caching and instruction branch hints. */
 #define UNLIKELY(_x) __builtin_expect(!!( _x ), FALSE)
 
+/* Marks a function which is written in assembly. */
+#define ASM_PROC
+
 /* Copy '_size' bytes of memory from '_src' to '_dst'.  */
 extern void* MemCpy(void* restrict _dst, const void* restrict _src, U64 _size);
 
@@ -66,19 +69,20 @@ extern void* MemSet(void* _block, U8 _val, U64 _size);
 /* Volatile fill the memory '_block' of '_size_ with '_val'. */
 extern volatile void* MemSetV(volatile void* _block, U8 _val, U64 _size);
 
+/* Reverses the bytes in the buffer. */
+extern void ReverseBytes(void* _buf, U64 _size);
+
 /* Trigger a kernel panic, print file and line info and loop forever. */
 _Noreturn extern void Panic(const char* _msg, const char* _file, const I32 _line);
 
 /* Trigger a kernel panic, print file and line info and loop forever. */
 #define PANIC(_msg) Panic(_msg, __FILE__, __LINE__)
 
-typedef char FormatBuf64[32];
+/* Convert an I64 into a string buffer. */
+extern void FmtI64(I64 _n, char _buf[32]);
 
 /* Convert an I64 into a string buffer. */
-extern void FmtI64(I64 _n, FormatBuf64 _buf);
-
-/* Convert an I64 into a string buffer. */
-extern void FmtI64Hex(I64 _n, FormatBuf64 _buf);
+extern void FmtI64Hex(I64 _n, char _buf[32]);
 
 /* Represents a 64-bit GPR such as %rax or %rsi. */
 union Register64 {
@@ -195,8 +199,7 @@ typedef union Register128 Register128AggregateSet[REGISTER_COUNT >> 1];
 /* Query the value of %eip. */
 __attribute__((always_inline)) static inline union Register64 QueryRip() {
     U64 rip;
-    __asm__ volatile
-    (
+    __asm__ volatile(
         "call 1f \n\t"
         "1: popq %0"
         : "=r"(rip)
@@ -212,7 +215,7 @@ __attribute__((always_inline)) static inline U64 ReadTsc() {
 }
 
 /* Queries regset from register data. These values are not that accurate. */
-extern void QueryRegSet(Register64AggregateSet _regSet64, Register128AggregateSet _regSet128);
+extern void ASM_PROC QueryRegSet(Register64AggregateSet _regSet64, Register128AggregateSet _regSet128);
 
 /* Prints the value of a single register and the name. */
 extern void DumpReg64(union Register64 _reg, const char* _regName);

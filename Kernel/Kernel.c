@@ -1,7 +1,7 @@
 #include "Kernel.h"
 #include "../Drivers/Screen.h"
 
-void* MemCpy(void* const _dst, const void* const _src, const U64 _size) {
+void* MemCpy(void* restrict const _dst, const void* restrict const _src, const U64 _size) {
     register U8* restrict to = (U8*)_dst;
     register const U8* restrict from = (const U8*)_src;
     register const U8* restrict const fromEnd = (const U8*)_src + _size;
@@ -11,7 +11,7 @@ void* MemCpy(void* const _dst, const void* const _src, const U64 _size) {
     return _dst;
 }
 
-volatile void* MemCpyV(volatile void* const _dst, const volatile void* const _src, const U64 _size) {
+volatile void* MemCpyV(volatile void* restrict const _dst, const volatile void* restrict const _src, const U64 _size) {
     register volatile U8* restrict to = (U8*)_dst;
     register const volatile U8* restrict from = (const volatile U8*)_src;
     register const volatile U8* restrict const fromEnd = from + _size;
@@ -39,12 +39,23 @@ volatile void* MemSetV(volatile void* const _block, const U8 _val, const U64 _si
     return _block;
 }
 
+void ReverseBytes(void* const _buf, const U64 _size) {
+    register U8* restrict lo = (U8*)_buf;
+    register U8* restrict hi = lo + _size - 1;
+    register U8 tmp;
+    while (lo < hi) {
+        tmp = *lo;
+        *lo++ = *hi;
+        *hi-- = tmp;
+    }
+}
+
 void Panic(const char* const _msg, const char* const _file, const I32 _line) {
     ScreenPrintError("! ### FATAL KERNEL PANIC ### !\n");
     ScreenPrintError(_msg);
     ScreenPrintError("\nFile: ");
     ScreenPrintError(_file);
-    FormatBuf64 buf;
+    char buf[32];
     FmtI64(_line, buf);
     ScreenPrintError("\nLine: ");
     ScreenPrintError(buf);
@@ -53,24 +64,27 @@ void Panic(const char* const _msg, const char* const _file, const I32 _line) {
     for(;;);
 }
 
-void FmtI64(register I64 _n, FormatBuf64 _buf) {
+void FmtI64(register I64 _n, char _buf[32]) {
     register char* str = _buf;
-    I64 sign = _n;
-    if (sign < 0) {
-        _n = -_n;
+    U64 i;
+    I64 sign;
+    if ((sign = _n) < 0) {
+         _n = -_n;
     }
+    i = 0;
     do {
-        *str++ = _n % 10 + '0';
-    }
-    while ((_n /= 10) > 0);
+        str[i++] = _n % 10 + '0';
+    } while ((_n /= 10) > 0);
+
     if (sign < 0) {
-         *str++ = '-';
+        str[i++] = '-';
     }
-    *str = '\0';
+    str[i] = '\0';
+    ReverseBytes(str, i);
 }
 
-void FmtI64Hex(register I64 _n, FormatBuf64 _buf) {
-    register char* put = _buf + sizeof(FormatBuf64);
+void FmtI64Hex(register I64 _n, char _buf[32]) {
+    register char* put = _buf + sizeof(char) * 32;
     *--put = '\0';
     if (!_n) {
         *_buf = '0';
@@ -118,34 +132,12 @@ const char* const REG_NAMES[REGISTER_COUNT] = {
     "xmm15"
 };
 
-void QueryRegSet(Register64AggregateSet _regSet64, Register128AggregateSet _regSet128) {
-    volatile U64* volatile const regSet64 = (U64*)_regSet64;
-    volatile U64* volatile const regSet128 = (U64*)_regSet128;
-    __asm__ volatile("movq %%rax, %0" : "=r" (regSet64[REGISTER_RAX]));
-    __asm__ volatile("movq %%rbx, %0" : "=r" (regSet64[REGISTER_RBX]));
-    __asm__ volatile("movq %%rcx, %0" : "=r" (regSet64[REGISTER_RCX]));
-    __asm__ volatile("movq %%rdx, %0" : "=r" (regSet64[REGISTER_RDX]));
-    __asm__ volatile("movq %%rsi, %0" : "=r" (regSet64[REGISTER_RSI]));
-    __asm__ volatile("movq %%rdi, %0" : "=r" (regSet64[REGISTER_RDI]));
-    __asm__ volatile("movq %%rsp, %0" : "=r" (regSet64[REGISTER_RSP]));
-    __asm__ volatile("movq %%rbp, %0" : "=r" (regSet64[REGISTER_RBP]));
-    __asm__ volatile("movq %%r8 , %0" : "=r" (regSet64[REGISTER_R8 ]));
-    __asm__ volatile("movq %%r9 , %0" : "=r" (regSet64[REGISTER_R9 ]));
-    __asm__ volatile("movq %%r10, %0" : "=r" (regSet64[REGISTER_R10]));
-    __asm__ volatile("movq %%r11, %0" : "=r" (regSet64[REGISTER_R11]));
-    __asm__ volatile("movq %%r12, %0" : "=r" (regSet64[REGISTER_R12]));
-    __asm__ volatile("movq %%r13, %0" : "=r" (regSet64[REGISTER_R13]));
-    __asm__ volatile("movq %%r14, %0" : "=r" (regSet64[REGISTER_R14]));
-    __asm__ volatile("movq %%r15, %0" : "=r" (regSet64[REGISTER_R15]));
-    (void)regSet128;
-}
-
 void DumpReg64(const union Register64 _reg, const char* const _regName) {
     ScreenPrint("%");
     ScreenPrint(_regName);
     ScreenPrint(": ");
-    FormatBuf64 buf;
-    FmtI64Hex(_reg.R64, buf);
+    char buf[32];
+    FmtI64(_reg.R64, buf);
     ScreenPrint(buf);
     NewLine();
 }

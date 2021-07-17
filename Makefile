@@ -1,10 +1,10 @@
-C_SOURCES = $(wildcard Kernel/*.c Drivers/*.c)
-HEADERS = $(wildcard Kernel/*.h Drivers/*.h)
-OBJ = ${C_SOURCES:.c=.o}
-KERNEL_OFFSET = 0x8200
+C_SOURCES := $(wildcard Kernel/*.c Drivers/*.c)
+HEADERS := $(wildcard Kernel/*.h Drivers/*.h)
+OBJ := ${C_SOURCES:.c=.o Kernel/Routines.o}
+KERNEL_OFFSET := 0x8200
 
-CC = gcc
-GDB = gdb
+CC := gcc
+GDB := gdb
 
 CFLAGS = -elf64 -std=c11 -fno-pie -O3 -msse -msse2 -Wall -Wextra -Werror
 
@@ -15,7 +15,7 @@ Kernel.bin: Boot/Head.o ${OBJ}
 	ld -o $@ -z max-page-size=4096 -Ttext ${KERNEL_OFFSET} $^ --oformat binary
 
 Kernel.elf: Boot/Head.o ${OBJ}
-	ld -o $@ -z max-page-size=4096 -Ttext ${KERNEL_OFFSET} $^ 
+	ld -o $@ -z max-page-size=4096 -Ttext ${KERNEL_OFFSET} $^
 
 run: Cyrax64.iso
 	qemu-system-x86_64 -fda Cyrax64.iso
@@ -35,11 +35,9 @@ Boot/BootLoader.bin: Boot/BootLoader.S
 
 %.o: %.S
 	as $< -o $@
-	ld --oformat binary -o $@ $@
 
 %.bin: %.S
 	as $< -o $@
-	ld --oformat binary -o $@ $@
 
 clean:
 	rm -rf *.bin *.dis *.o *.elf
