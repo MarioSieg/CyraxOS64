@@ -60,13 +60,13 @@ void Panic(const char* const _msg, const char* const _file, const I32 _line) {
     ScreenPrintError("\nLine: ");
     ScreenPrintError(buf);
     NewLine();
-    DumpAllRegs();
+    DumpAllRegs(FALSE);
     for(;;);
 }
 
-void FmtI64(register I64 _n, char _buf[32]) {
+U64 FmtI64(register I64 _n, char _buf[32]) {
     register char* str = _buf;
-    U64 i;
+    register U64 i = 0;
     I64 sign;
     if ((sign = _n) < 0) {
          _n = -_n;
@@ -75,86 +75,93 @@ void FmtI64(register I64 _n, char _buf[32]) {
     do {
         str[i++] = _n % 10 + '0';
     } while ((_n /= 10) > 0);
-
     if (sign < 0) {
         str[i++] = '-';
     }
     str[i] = '\0';
     ReverseBytes(str, i);
+    return i;
 }
 
-void FmtI64Hex(register I64 _n, char _buf[32]) {
-    register char* put = _buf + sizeof(char) * 32;
-    *--put = '\0';
-    if (!_n) {
-        *_buf = '0';
-        return;
-    }
-    do {
-        *--put = *("0123456789ABCDEF" + (_n & 0x0F));
+U64 FmtI64Hex(register I64 _n, char _buf[32]) {
+    register U8 width = 32;
+    register char* dst = _buf;
+    register char* res = dst + 32;
+    register U64 i = 0;
+    dst = res;
+    while (width--) {
+        *--dst = "0123456789ABCDEF"[_n & 0x0F];
         _n >>= 4;
-    } while(_n && put != _buf);
+        ++i;
+    }
+    return i;
 }
 
 const char* const REG_NAMES[REGISTER_COUNT] = {
-    "rax",
-    "rbx",
-    "rcx",
-    "rdx",
-    "rsi",
-    "rdi",
-    "rsp",
-    "rbp",
-    "r8 ",
-    "r9 ",
-    "r10",
-    "r11",
-    "r12",
-    "r13",
-    "r14",
-    "r15",
+    "%rax",
+    "%rbx",
+    "%rcx",
+    "%rdx",
+    "%rsi",
+    "%rdi",
+    "%rsp",
+    "%rbp",
+    "%r8 ",
+    "%r9 ",
+    "%r10",
+    "%r11",
+    "%r12",
+    "%r13",
+    "%r14",
+    "%r15",
 
-    "xmm0",
-    "xmm1",
-    "xmm2",
-    "xmm3",
-    "xmm4",
-    "xmm5",
-    "xmm6",
-    "xmm7",
-    "xmm8",
-    "xmm9",
-    "xmm10",
-    "xmm11",
-    "xmm12",
-    "xmm13",
-    "xmm14",
-    "xmm15"
+    "%xmm0 ",
+    "%xmm1 ",
+    "%xmm2 ",
+    "%xmm3 ",
+    "%xmm4 ",
+    "%xmm5 ",
+    "%xmm6 ",
+    "%xmm7 ",
+    "%xmm8 ",
+    "%xmm9 ",
+    "%xmm10",
+    "%xmm11",
+    "%xmm12",
+    "%xmm13",
+    "%xmm14",
+    "%xmm15"
 };
 
 void DumpReg64(const union Register64 _reg, const char* const _regName) {
-    ScreenPrint("%");
     ScreenPrint(_regName);
     ScreenPrint(": ");
     char buf[32];
-    FmtI64(_reg.R64, buf);
+    FmtI64Hex(_reg.R64, buf);
     ScreenPrint(buf);
     NewLine();
 }
 
 void DumpReg128(union Register128 _reg, const char* _regName) {
-    (void)_reg;
-    (void)_regName;
+    ScreenPrint(_regName);
+    ScreenPrint(": ");
+    char buf[64];
+    const U64 off = FmtI64Hex(_reg.Hi.U, buf);
+    FmtI64Hex(_reg.Lo.U, buf + off - 1);
+    ScreenPrint(buf);
+    NewLine();
 }
 
-void DumpAllRegs(void) {
+void DumpAllRegs(const Bool _xmm) {
     Register64AggregateSet reg64Set;
     Register128AggregateSet reg128Set;
     QueryRegSet(reg64Set, reg128Set);
     for (U8 i = 0; i < REGISTER_COUNT >> 1; ++i) {
         DumpReg64(reg64Set[i], REG_NAMES[i]);
     }
-    for (U8 i = 0; i < REGISTER_COUNT >> 1; ++i) {
-        DumpReg128(reg128Set[i], REG_NAMES[i]);
+    if (_xmm) {
+        for (U8 i = 15; i < REGISTER_COUNT; ++i) {
+            DumpReg128(reg128Set[i - 16], REG_NAMES[i]);
+        }
     }
 }

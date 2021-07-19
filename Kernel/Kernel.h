@@ -79,10 +79,10 @@ _Noreturn extern void Panic(const char* _msg, const char* _file, const I32 _line
 #define PANIC(_msg) Panic(_msg, __FILE__, __LINE__)
 
 /* Convert an I64 into a string buffer. */
-extern void FmtI64(I64 _n, char _buf[32]);
+extern U64 FmtI64(I64 _n, char _buf[32]);
 
 /* Convert an I64 into a string buffer. */
-extern void FmtI64Hex(I64 _n, char _buf[32]);
+extern U64 FmtI64Hex(I64 _n, char _buf[32]);
 
 /* Represents a 64-bit GPR such as %rax or %rsi. */
 union Register64 {
@@ -224,6 +224,6 @@ extern void DumpReg64(union Register64 _reg, const char* _regName);
 extern void DumpReg128(union Register128 _reg, const char* _regName);
 
 /* Prints the value of all registers. */ 
-extern void DumpAllRegs(void);
+extern void DumpAllRegs(Bool _xmm);
 
 #endif
