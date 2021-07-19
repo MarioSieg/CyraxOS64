@@ -165,3 +165,17 @@ void DumpAllRegs(const Bool _xmm) {
         }
     }
 }
+
+struct IdtGate InterruptDescriptorTable[IDT_ENTRIES];
+struct IdtRegisterPtr IdtPointer;
+
+void SetIdtGate(const U64 _idx, void(*const _routine)(void)) {
+    (void)_idx;
+    (void)_routine;
+}
+
+void LoadIdt(void) {
+    IdtPointer.BaseOffset = (U64)&InterruptDescriptorTable;
+    IdtPointer.Limit = IDT_ENTRIES * sizeof(struct IdtRegisterPtr) - 1;
+    __asm__ volatile("lidtq (%0)" : : "r"(&IdtPointer));
+}

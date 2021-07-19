@@ -226,4 +226,31 @@ extern void DumpReg128(union Register128 _reg, const char* _regName);
 /* Prints the value of all registers. */ 
 extern void DumpAllRegs(Bool _xmm);
 
+struct __attribute__((packed)) IdtGate {
+    U16 Offset0;
+    U16 Selector;
+    U8 StackTableOffset;
+    U8 TypeAttrib;
+    U16 Offset1;
+    U32 Offset3;
+    U32 Zero;
+};
+
+_Static_assert(sizeof(struct IdtGate) == 16, "Invalid record size!");
+
+struct __attribute__((packed)) IdtRegisterPtr {
+    U16 Limit;
+    U64 BaseOffset;
+};
+
+_Static_assert(sizeof(struct IdtRegisterPtr) == 10, "Invalid record size!");
+
+#define IDT_ENTRIES 256
+
+extern struct IdtGate InterruptDescriptorTable[IDT_ENTRIES];
+extern struct IdtRegisterPtr IdtPointer;
+
+extern void SetIdtGate(U64 _idx, void(*_routine)(void));
+extern void LoadIdt(void);
+
 #endif
