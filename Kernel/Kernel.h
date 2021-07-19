@@ -253,4 +253,6 @@ extern struct IdtRegisterPtr IdtPointer;
 extern void SetIdtGate(U64 _idx, void(*_routine)(void));
 extern void LoadIdt(void);
 
+#define KERNEL_CS 0x08
+
 #endif

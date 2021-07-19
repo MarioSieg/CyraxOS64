@@ -170,8 +170,14 @@ struct IdtGate InterruptDescriptorTable[IDT_ENTRIES];
 struct IdtRegisterPtr IdtPointer;
 
 void SetIdtGate(const U64 _idx, void(*const _routine)(void)) {
-    (void)_idx;
-    (void)_routine;
+    struct IdtGate* const gate = &InterruptDescriptorTable[_idx];
+    gate->Offset0 = (U64)_routine & 0xFFFF;
+    gate->Selector = KERNEL_CS;
+    gate->StackTableOffset = 0; // TODO
+    gate->TypeAttrib = 0;       // TODO
+    gate->Offset1 = ((U64)_routine >> 16) & 0xFFFF;
+    gate->Offset1 = ((U64)_routine & 0xFFFFFFFF00000000);
+    gate->Zero = 0;
 }
 
 void LoadIdt(void) {
