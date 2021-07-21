@@ -1,5 +1,6 @@
 .text
 .equ KERNEL_OFFSET, 0x8200
+.equ SECTOR_COUNT, 32
 
 # The BIOS gives the control to us
 # Main entry of the boot loader:
@@ -31,12 +32,14 @@ MachineBoot:
 
 BootProxy:
     xorw    %ax, %ax                # Clear segment registers
-    movw    %ax, %es
-    movw    %ax, %ds
     movw    %ax, %ss
-    movb    %dl, (BOOT_DRIVE)       # The BIOS gives us the boot drive in %dl. We backup it because %dl will probably be overridden
+    movw    %ax, %ds
+    movw    %ax, %es
+    movw    %ax, %fs
+    movw    %ax, %gs
     movw    $0x0500, %bp            # Setup stack
     movw    %bp, %sp                # Setup stack
+    movb    %dl, (BOOT_DRIVE)       # The BIOS gives us the boot drive in %dl. We backup it because %dl will probably be overridden
     callw   LoadKernelImageFromDisk # Load out kernel from disk
     callw   EnterProtectedMode      # Switch from 16-bit real mode into 32-bit protected mode
 
@@ -44,7 +47,7 @@ BootProxy:
 .code16
 LoadKernelImageFromDisk:
     movw    $KERNEL_OFFSET, %bx
-    movb    $16, %dh 
+    movb    $SECTOR_COUNT, %dh 
     movb    (BOOT_DRIVE), %dl
     callw   DiskLoadRoutine         # Invoke disk load routine
     retw
