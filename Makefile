@@ -1,12 +1,12 @@
-C_SOURCES := $(wildcard Kernel/*.c Drivers/*.c)
-HEADERS := $(wildcard Kernel/*.h Drivers/*.h)
+C_SOURCES := $(wildcard Kernel/*.c Kernel/Drivers/*.c)
+HEADERS := $(wildcard Kernel/*.h Kernel/Drivers/*.h)
 OBJ := ${C_SOURCES:.c=.o Kernel/Routines.o}
 KERNEL_OFFSET := 0x8200
 
 CC := gcc
 GDB := gdb
 
-CFLAGS = -elf64 -std=c11 -fno-pie -O3 -msse -msse2 -Wall -Wextra -Werror -mno-red-zone
+CFLAGS = -elf64 -std=c11 -fno-pie -O3 -mno-sse -mno-sse2 -Wall -Wextra -Werror -mno-red-zone
 
 Cyrax64.iso: Boot/BootLoader.bin Kernel.bin
 	cat $^ > Cyrax64.iso
@@ -41,5 +41,5 @@ Boot/BootLoader.bin: Boot/BootLoader.S
 
 clean:
 	rm -rf *.bin *.dis *.o *.elf
-	rm -rf Kernel/*.o Boot/*.bin Drivers/*.o Boot/*.o
-	rm -rf Kernel/*.c.asm Drivers/*.c.asm
+	rm -rf Kernel/*.o Boot/*.bin Kernel/Drivers/*.o Boot/*.o
+	rm -rf Kernel/*.c.asm Kernel/Drivers/*.c.asm

@@ -1,7 +1,7 @@
 #ifndef PORTS_H
 #define PORTS_H
 
-#include "../Kernel/Kernel.h"
+#include "../Foundation.h"
 
 __attribute__((flatten)) static inline U8 PortInU8(const U16 _port) {
     U8 r;

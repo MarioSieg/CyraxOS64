@@ -1,5 +1,6 @@
 #include "Screen.h"
 #include "Ports.h"
+#include "../Memory.h"
 
 static inline I32 GetOffset(const I32 _col, const I32 _row) {
     return (_row * SCREEN_MAX_COLS + _col) << 1;
@@ -34,7 +35,7 @@ void ScreenClear(void) {
     register volatile U8* const vga = VGA_VRAM_PTR;
     for (register I32 i = 0; i < size; ++i) {
         *(vga + (i * 2)) = ' ';
-        *(vga + (i * 2 + 1)) = SCREEN_COLOR_TEXT;
+        *(vga + (i * 2 + 1)) = 0x0F;
     }
     SetCursorOffset(GetOffset(0, 0));
 }
@@ -43,7 +44,7 @@ static I32 PrintCharAt(const char _c, I32 _col, I32 _row, const U8 _attrib) {
     volatile U8* const vga = VGA_VRAM_PTR;
     if (_col >= SCREEN_MAX_COLS || _row >= SCREEN_MAX_ROWS) {
         *(vga + ((SCREEN_MAX_COLS * SCREEN_MAX_ROWS) << 1) - 2) = 'X';
-        *(vga + ((SCREEN_MAX_COLS * SCREEN_MAX_ROWS) << 1) - 1) = SCREEN_COLOR_ERROR;
+        *(vga + ((SCREEN_MAX_COLS * SCREEN_MAX_ROWS) << 1) - 1) = 0x0F;
         return GetOffset(_col, _row);
     }
     I32 offset = _col >= 0 && _row >= 0 ? GetOffset(_col, _row) : GetCursorOffset();
@@ -57,10 +58,10 @@ static I32 PrintCharAt(const char _c, I32 _col, I32 _row, const U8 _attrib) {
     }
     if (offset >= SCREEN_MAX_ROWS * (SCREEN_MAX_COLS << 1)) {
         for (register I32 i = 0; i < SCREEN_MAX_ROWS; ++i) {
-            MemCpyV
+            MemCpy
             (
-                GetOffset(0, i - 1) + VGA_VRAM_PTR,
-                GetOffset(0, i) + VGA_VRAM_PTR,
+                GetOffset(0, i - 1) + (U8*)VGA_VRAM_PTR,
+                GetOffset(0, i) + (const U8*)VGA_VRAM_PTR,
                 SCREEN_MAX_COLS << 1
             );
         }
@@ -85,6 +86,22 @@ void ScreenPrintAt(register const char* _msg, register I32 _col, register I32 _r
     }
     while (*_msg) {
         offset = PrintCharAt(*_msg++, _col, _row, _attrib);
+        _row = GetRowOffset(offset);
+        _col = GetColOffset(offset);
+    }
+}
+
+void ScreenPrintAtFixed(register const char* _msg, register const U64 _size, register I32 _col, register I32 _row, register const U8 _attrib) {
+    I32 offset;
+    if (_col >= 0 && _row >= 0)
+        offset = GetOffset(_col, _row);
+    else {
+        offset = GetCursorOffset();
+        _row = GetRowOffset(offset);
+        _col = GetColOffset(offset);
+    }
+    for (register U64 i = 0; i < _size; ++i) {
+        offset = PrintCharAt(_msg[i], _col, _row, _attrib);
         _row = GetRowOffset(offset);
         _col = GetColOffset(offset);
     }

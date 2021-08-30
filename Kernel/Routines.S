@@ -3,6 +3,7 @@
 .globl QueryRegSet
 
 QueryRegSet:
+    # Backup GPR registers:
     movq    %rax, (%rdi)
     movq    %rbx, 8(%rdi)
     movq    %rcx, 16(%rdi)
@@ -19,6 +20,18 @@ QueryRegSet:
     movq    %r13, 104(%rdi)
     movq    %r14, 112(%rdi)
     movq    %r15, 120(%rdi)
+
+    # Backup control registers:
+    movq    %cr0, %rax
+    movq    %rax, 128(%rdi)
+    movq    %cr2, %rax
+    movq    %rax, 136(%rdi)
+    movq    %cr3, %rax
+    movq    %rax, 144(%rsi)
+    movq    %cr4, %rax
+    movq    %rax, 162(%rsi)
+
+    # TODO: Backup SSE registers:
 
     retq
 
